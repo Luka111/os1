@@ -14,6 +14,7 @@ PCB::PCB(Thread *thr, StackSize stackSize , Time timeSlice, void* threadwrapper)
   m_timeQuantsRan(0),
   m_Waiting(){
   Kernel::createStack(this,stackSize,threadwrapper);
+  Kernel::AllThreadPCBs.addToBack(this);
 }
 
 PCB::~PCB(){

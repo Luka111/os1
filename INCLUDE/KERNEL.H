@@ -12,7 +12,7 @@ class Kernel {
   static void block();
   static void deblock(PCB* pcb);
   static InterruptHandler swapHandlers(IVTNo ivtNo, InterruptHandler newhandler);
-  static void dispatch();
+  static void interrupt dispatch();
   static void initialize(int argc, char* argv[]);
   static int kill();
   static void createStack(PCB*, StackSize stackSize, void* threadwrapper);
