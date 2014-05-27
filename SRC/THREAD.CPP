@@ -6,8 +6,11 @@
 #include "..\INCLUDE\SCHEDULE.H"
 #include "..\INCLUDE\SEGMENT.H"
 
+#include <iostream.h>
+
 Thread::Thread(StackSize stackSize, Time timeSlice):
 m_PCBId(KernelObj::createPCB(this,stackSize,timeSlice,(void*)(&(Thread::wrapper)))){
+  cout << "Thread ID " << m_PCBId << " " << (void*) this << " created with timeSlice " << timeSlice << ", defaultTimeSlice BTW is " << defaultTimeSlice << endl;
 }
 
 Thread::~Thread(){
@@ -29,38 +32,12 @@ void Thread::waitToComplete(){
   lock();
   KernelObj* myPCB = KernelObj::get(m_PCBId);
   myPCB->wait();
+  cout << m_PCBId << " waitsToComplete" << endl;
   unlock();
 }
 
 void Thread::wrapper(Thread *running){
-  unsigned helpSeg,helpOff;
-  asm{
-    mov helpSeg, es
-    mov helpOff, bx
-    mov bx,0
-  }
-  unsigned bla;
-  asm {
-    push ax
-    mov ax, [bp+0]
-    mov bla, ax
-    mov ax, [bp+1]
-    mov bla, ax
-    mov ax, [bp+2]
-    mov bla, ax
-    mov ax, [bp+3]
-    mov bla, ax
-    mov ax, [bp+4]
-    mov bla, ax
-    mov ax, [bp+5]
-    mov bla, ax
-    mov ax, [bp+6]
-    mov bla, ax
-    mov ax, [bp+7]
-    mov bla, ax
-    pop ax
-  }
-  running = (Thread*)MK_FP(helpSeg,helpOff);
+  cout << "wrapper started PCB ID " << running->m_PCBId << endl;
   running->run();
   lock();
   KernelObj::get(running->m_PCBId)->signal();

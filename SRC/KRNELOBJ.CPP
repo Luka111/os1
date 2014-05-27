@@ -22,14 +22,15 @@ void KernelObj::asmwait(){
   lock();
   unsigned id = m_ID;
   asm {
-    push ax;
     mov ax, id
+    mov dx, 42
     int 60h
   }
   unlock();
 }
 
 void KernelObj::block(){
+  cout << "KernelObj blocking" << m_ID << endl;
   Kernel::block();
 }
 
@@ -42,6 +43,6 @@ void KernelObj::destroy(ID id){
 }
 
 ID KernelObj::putObj(KernelObj* obj){
-  cout << "putting obj " << obj << " to map" << endl;
+  //cout << "putting obj " << obj << " to map" << endl;
   return g_Map.put(obj);
 }

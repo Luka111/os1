@@ -13,7 +13,7 @@ typedef unsigned long StackSize;
 struct PCB : public KernelObj{
 	PCB(Thread *thr, StackSize sz , Time t, void* threadwrapper);
   ~PCB();
-	static enum {NEW,RUNNING,READY,BLOCKED,TERMINATED};
+	static enum {NEW,RUNNING,READY,BLOCKED,TERMINATED,SYSTEM};
 	volatile int state;
 	
 	Thread *m_Thread;
@@ -23,15 +23,19 @@ struct PCB : public KernelObj{
 	unsigned ss;
 
   void wait();
+  void block();
   void signal();
 
   int shouldBeDispatched();
+  static PCB* createSystemPCB(StackSize stackSize, void* systemCallFunctionPointer);
 
 private:
 	Time m_timeQuantsToRun;
 	Time m_timeQuantsRan;
 
 protected:
+  //constructor for system PCB
+  PCB(StackSize sz, void* functionpointer);
 	List<PCB> m_Waiting ;
     
 };

@@ -1,14 +1,23 @@
 #include "..\INCLUDE\KERNELEV.H"
 #include "..\INCLUDE\KERNEL.H"
 #include "..\INCLUDE\LOCK.H"
+#include "..\INCLUDE\IVTENTRY.H"
 
-static KernelEvent* g_KernelEventMap[256] = {0};
+
+#include <iostream.h>
+
+static ID g_KernelEventMap[256] = {0};
 
 KernelEvent::KernelEvent(IVTNo ivtNo):
   KernelObj(),
   m_ivtNo(ivtNo),
   m_ParentPCB(Kernel::runningPCB){
-    g_KernelEventMap[m_ivtNo] = this;
+    g_KernelEventMap[m_ivtNo] = m_ID;
+    IVTEntry* ivtentry = IVTEntry::getByIvtNo(ivtNo);
+    if(ivtentry){
+      cout << "installing my id " << m_ID << "on IVTEntry " << (void*) ivtentry << endl;
+      ivtentry->m_KernelEventID = m_ID;
+    }
 }
 
 KernelEvent::~KernelEvent(){
@@ -25,10 +34,12 @@ void KernelEvent::signal(){
   Kernel::deblock(m_ParentPCB);
 }
 
-KernelEvent* KernelEvent::getByIvtNo(IVTNo ivtNo){
+ID KernelEvent::getByIvtNo(IVTNo ivtNo){
   return g_KernelEventMap[ivtNo];
 }
 
 ID KernelObj::createKernelEvent(IVTNo ivtNo){
-  return putObj(new KernelEvent(ivtNo));
+  KernelEvent* nke = new KernelEvent(ivtNo);
+  cout << "KernelEvent on ivtNo " << ivtNo << endl;
+  return nke->m_ID;
 }

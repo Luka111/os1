@@ -10,36 +10,90 @@
 
 #include <iostream.h>
 
-PCB* Kernel::runningPCB=NULL;
+const unsigned int systemPCBStackSize = 4096;
 
-static PCB* s_UserThreadPCB = NULL;
+volatile PCB* Kernel::runningPCB=NULL;
+
+static volatile PCB* s_UserThreadPCB = NULL;
+
+volatile PCB* Kernel::systemPCB = NULL;
 
 List<PCB> Kernel::AllThreadPCBs;
 
 static InterruptHandler originalTimerRoutine;
 
-static volatile unsigned sss, ssp, tws, twp, rts, rtp, oldSP, oldSS;
+static volatile unsigned sss, ssp, tws, twp, rts, rtp, oldSP, oldSS, kernelSS, kernelSP;
 
 static void interrupt systemRoutine(){
   ID eventid;
-  asm {
-    mov eventid, ax;
-    pop ax;
+  unsigned operation;
+  asm{
+    mov eventid, ax
+    mov operation, dx
+    mov ssp, sp
+    mov sss, ss
   }
-  KernelObj* kev = KernelObj::get(eventid);
-  kev->block();
+  Kernel::runningPCB->sp = ssp;
+  Kernel::runningPCB->ss = sss;
+  Kernel::runningPCB->state = PCB::BLOCKED;
+  ssp = FP_OFF(Kernel::systemPCB->stack+systemPCBStackSize-1);
+  sss = FP_SEG(Kernel::systemPCB->stack+systemPCBStackSize-1);
+	tws = FP_SEG(&(Kernel::systemCall));
+	twp = FP_OFF(&(Kernel::systemCall));
+  cout << "ir 60 " << eventid << ", " << operation << endl;
+  asm{
+    mov ax, eventid
+    mov dx, operation
+    mov sp, ssp
+    mov ss, sss
+    push dx
+    push ax
+    mov ax, 1389
+    push ax
+    push ax
+		// save PSW 
+    pushf
+    pop ax
+    or ax, 1000000000b
+    push ax
+		// save CS of startfunction
+		mov ax, tws
+		push ax
+		// save IP of startfunction
+		mov ax, twp
+		push ax
+    //"unwind the stack"
+    mov ax, 0
+    push ax
+    push ax
+    push ax
+    push ax
+    push es
+    push ds
+		push si
+		push di
+		push bp
+    mov bp, sp
+  }
 }
 
 extern void tick();
 
-int nja = 0;
+volatile int nja = 0;
 
 static void interrupt timerRoutine(){
-  if(Kernel::runningPCB->shouldBeDispatched()){
+  //if(!(++nja %100)){
+  /*
+  if(++nja<10){
+    cout << nja << endl;
+  }
+  */
+  if(Kernel::runningPCB && Kernel::runningPCB->shouldBeDispatched()){
+    //cout << "dispatching" << endl;
     Kernel::dispatch();
   }
   tick();
-  originalTimerRoutine();
+  (*originalTimerRoutine)();
 }
 
 InterruptHandler Kernel::swapHandlers(IVTNo ivtNo, InterruptHandler newhandler){
@@ -57,11 +111,11 @@ InterruptHandler Kernel::swapHandlers(IVTNo ivtNo, InterruptHandler newhandler){
 
       mov ax, 0
       mov es, ax
-      mov bx, ivtno 
+      mov bx, word ptr ivtno 
 
-      push word ptr es:bx
-      pop word ptr oldSEG
       push word ptr es:bx+2
+      pop word ptr oldSEG
+      push word ptr es:bx
       pop word ptr oldOFF
 
       push word ptr newSEG
@@ -78,38 +132,121 @@ InterruptHandler Kernel::swapHandlers(IVTNo ivtNo, InterruptHandler newhandler){
   return (InterruptHandler) MK_FP(oldSEG,oldOFF);
 }
 
-void interrupt Kernel::dispatch(){
-  lock();
 
+void interrupt Kernel::dispatch(){
+  if(!runningPCB){
+    return;
+  }
+  lock();
   asm{
     mov ssp, sp
     mov sss, ss
   }
-  if(runningPCB!=s_UserThreadPCB){
+  if(runningPCB->state == PCB::READY){
+    asm{
+      mov kernelSP, sp
+      mov kernelSS, ss
+    }
+  }else{
     runningPCB->sp = ssp;
     runningPCB->ss = sss;
   }
-
   if(runningPCB->state == PCB::RUNNING)
   {
     runningPCB->state=PCB::READY;
-    Scheduler::put(runningPCB);
+    Scheduler::put((PCB*)runningPCB);
   }
 
   runningPCB = Scheduler::get();
-  runningPCB->state = PCB::RUNNING;
+  if(!runningPCB){
+    cout << "no running" << endl;
+    asm{
+      mov sp, kernelSP
+      mov ss, kernelSS
+    }
+  }else{
+    runningPCB->state = PCB::RUNNING;
 
-  ssp = runningPCB->sp;
-  sss = runningPCB->ss;
-  asm{
-    mov sp, ssp
-    mov ss, sss
+    ssp = runningPCB->sp;
+    sss = runningPCB->ss;
+    asm{
+      mov sp, ssp
+      mov ss, sss
+    }
   }
-
   unlock();
 }
 
-void Kernel::createStack(PCB* newPCB, StackSize stackSize, void* threadwrapper)
+void Kernel::createSystemStack(PCB* newPCB, StackSize stackSize, void* functionpointer){
+  lock();
+  byte* stack = new byte[stackSize];
+	sss = FP_SEG(stack+stackSize-1);
+	ssp = FP_OFF(stack+stackSize-1);
+	tws = FP_SEG(functionpointer);
+	twp = FP_OFF(functionpointer);
+
+  asm{
+    push ax
+    mov oldSS, ss
+    mov oldSP, sp
+		mov ss, sss
+		mov sp, ssp
+    mov ax, 1389
+    push ax
+    push ax
+		// save PSW 
+    pushf
+    pop ax
+    or ax, 1000000000b
+    push ax
+		// save CS of startfunction
+		mov ax, tws
+		push ax
+		// save IP of startfunction
+		mov ax, twp
+		push ax
+    //"unwind the stack"
+    mov ax, 0
+    push ax
+    push ax
+    push ax
+    push ax
+    push es
+    push ds
+		push si
+		push di
+		push bp
+
+    mov sss, ss
+    mov ssp, sp
+    mov ss, oldSS
+    mov sp, oldSP
+    pop ax
+  }
+  newPCB->ss = sss;
+  newPCB->sp = ssp;
+  newPCB->stack = stack;
+  unlock();
+}
+
+void Kernel::systemCall(ID id, unsigned int operation){
+  cout << "KernelObj ID " << id << " starting operation " << operation << endl;
+  KernelObj* ko = KernelObj::get(id);
+  switch(operation){
+    case 42:
+      ko->block();
+      break;
+    case 43:
+      ko->signal();
+      break;
+    default:
+      break;
+  }
+  cout << "KernelObj ID " << id << " finished operation " << operation << ", dispatching now" << endl;
+  dispatch();
+}
+
+void Kernel::createStack(PCB* newPCB, StackSize stackSize, void* startfunction)
 {
 	lock();
   if(!runningPCB){
@@ -119,8 +256,8 @@ void Kernel::createStack(PCB* newPCB, StackSize stackSize, void* threadwrapper)
 
 	sss = FP_SEG(stack+stackSize-1);
 	ssp = FP_OFF(stack+stackSize-1);
-	tws = FP_SEG(threadwrapper);
-	twp = FP_OFF(threadwrapper);
+	tws = FP_SEG(startfunction);
+	twp = FP_OFF(startfunction);
   rts = FP_SEG(newPCB->m_Thread);
   rtp = FP_OFF(newPCB->m_Thread);
 
@@ -130,35 +267,32 @@ void Kernel::createStack(PCB* newPCB, StackSize stackSize, void* threadwrapper)
     mov oldSP, sp
 		mov ss, sss
 		mov sp, ssp
-		// save PSW 
-    pushf
-    pop ax
-    or ax, 1000000000b
-    push ax
 		// save CS of the parametar
 		mov ax, rts
 		push ax
 		// save IP of the parametar
 		mov ax, rtp
 		push ax
-    mov ax, 42
+    mov ax, 1389
     push ax
     push ax
+		// save PSW 
+    pushf
+    pop ax
+    or ax, 1000000000b
     push ax
-		// save CS of threadwrapper
+		// save CS of startfunction
 		mov ax, tws
 		push ax
-		// save IP of threadwrapper
+		// save IP of startfunction
 		mov ax, twp
 		push ax
     //"unwind the stack"
     mov ax, 0
     push ax
-    mov bx, rtp
-    push bx
     push ax
     push ax
-    mov es, rts
+    push ax
     push es
     push ds
 		push si
@@ -177,86 +311,50 @@ void Kernel::createStack(PCB* newPCB, StackSize stackSize, void* threadwrapper)
 	unlock();
 }
 
-void Kernel::saveStack()
-{
-  unsigned tss, tsp;
-  asm {
-    mov tsp, sp
-    mov tss, ss
-		pushf
-		push ax
-		push bx
-		push cx
-		push dx
-		push es
-		push ds
-		mov ssp, sp
-		mov sss, ss
-    mov sp, tsp
-    mov ss, tss
-	}
-	runningPCB->sp = ssp;
-	runningPCB->ss = sss;
-}
-
-void Kernel::restoreStack()
-{
-  unsigned bla=45;
-	sss = runningPCB->ss;
-	ssp = runningPCB->sp;
-
-	asm {
-		mov ss, sss
-		mov sp, ssp
-		pop ds
-		pop es
-		pop dx
-    mov bla, dx
-		pop cx
-    mov bla, cx
-		pop bx
-    mov bla, bx
-		pop ax
-    mov bla, ax
-		popf
-	}
-}
-
 void Kernel::block(){
-  lock();
-  saveStack();
+  asm{
+    mov ssp, sp
+    mov sss, ss
+  }
+  runningPCB->sp = ssp;
+  runningPCB->ss = sss;
   runningPCB->state = PCB::BLOCKED;
   runningPCB = Scheduler::get();
   runningPCB->state = PCB::RUNNING;
-  restoreStack();
-	unlock();
+  ssp = runningPCB->sp;
+  sss = runningPCB->ss;
+  asm{
+    mov sp, ssp
+    mov ss, sss
+  }
 }
 
-void Kernel::deblock(PCB* pcb){
+void Kernel::deblock(volatile PCB* pcb){
+  lock();
   pcb->state = PCB::READY;
-  Scheduler::put(pcb);
+  Scheduler::put((PCB*)pcb);
+  unlock();
 }
 
 void Kernel::initialize(int argc, char* argv[]){
-  lock();
-  UserThread* u = new UserThread(argc,argv); //just like that
-  runningPCB = s_UserThreadPCB;
   originalTimerRoutine = swapHandlers(0x08, timerRoutine);
-  //swapHandlers(0x60, systemRoutine);
+  swapHandlers(0x60, systemRoutine);
+  UserThread* u = new UserThread(argc,argv); //just like that
+  systemPCB = PCB::createSystemPCB(systemPCBStackSize, (void*)(&(systemCall)));
+  runningPCB = s_UserThreadPCB;
   u->start();
   dispatch();
-  unlock();
 }
 
 int Kernel::kill(){
   lock();
+  UserThread* u = (UserThread*)(s_UserThreadPCB->m_Thread);
+  int result = u->getInvocationResult();
+  delete u;
   while(!AllThreadPCBs.isEmpty())
   {
     dispatch();
   }
-  UserThread* u = (UserThread*)(s_UserThreadPCB->m_Thread);
-  int result = u->getInvocationResult();
-  delete u;
   unlock();
   return result;
 }

@@ -1,6 +1,8 @@
 #include "..\INCLUDE\KRNELSEM.H"
 #include "..\INCLUDE\KERNEL.H"
 
+#include <iostream.h>
+
 KernelSemaphore::KernelSemaphore(int val):
   KernelObj(),
   m_Val(val){
@@ -13,16 +15,18 @@ void KernelSemaphore::wait(){
 }
 
 void KernelSemaphore::block(){
-  m_BlockedPCBs.addToBack(Kernel::runningPCB);
+  cout << "KernelSemaphore ID " << m_ID << " blocking PCB ID " << ((KernelObj*)Kernel::runningPCB)->m_ID << endl;
+  m_BlockedPCBs.addToBack((PCB*)Kernel::runningPCB);
   KernelObj::block();
 }
 
 void KernelSemaphore::signal(){
   if(m_Val++<0){
-    Kernel::deblock(m_BlockedPCBs.getFromFront());
+    Kernel::deblock((volatile PCB*)m_BlockedPCBs.getFromFront());
   }
 }
 
 ID KernelObj::createKernelSemaphore(int val){
-  return KernelObj::putObj(new KernelSemaphore(val));
+  KernelSemaphore* nke = new KernelSemaphore(val);
+  return nke->m_ID;
 }

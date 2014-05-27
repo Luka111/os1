@@ -1,5 +1,7 @@
 #include "..\INCLUDE\LOCK.H"
 
+#include <iostream.h>
+
 extern ID g_IDMapCounter;
 template <class T> class IDMap {
   struct IDMapEntry {
@@ -25,6 +27,7 @@ public:
     lock();
     g_IDMapCounter++;
     posl = (!prvi ? prvi : posl->next) = new IDMapEntry(pt,g_IDMapCounter);
+    //cout<<"{{ PUT }} POINTER - " << pt << " <------> " << " COUNTER - " << g_IDMapCounter << endl;
     unlock();
     return g_IDMapCounter;
   }
@@ -36,6 +39,8 @@ public:
     if (!tek){
       return 0;
     }
+    //cout << tek->m_Pt << " -> " << id << "  |  " ;
+    //cout<<"{{ GET }} POINTER - " << tek->m_Pt << " <------> " << " COUNTER - " << id << endl;
     return tek->m_Pt;
   }
   T* remove(ID id){

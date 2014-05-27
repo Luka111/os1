@@ -12,10 +12,10 @@ public:
   ~KernelEvent();
   void wait();
   void signal();
-  static KernelEvent* getByIvtNo(IVTNo ivtNo);
+  static ID getByIvtNo(IVTNo ivtNo);
 private:
   IVTNo m_ivtNo;
-  PCB* m_ParentPCB;
+  volatile PCB* m_ParentPCB;
 };
 
 #endif

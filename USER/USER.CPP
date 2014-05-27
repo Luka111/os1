@@ -151,6 +151,8 @@ int userMain (int argc, char* argv[])
 		return 1;
 	}
 
+  cout << "going with " << N << " producers" << endl;
+
 	buff = new BoundedBuffer(buffSize);
 	Producer **pro = new Producer*[N];
 	KeyboardEvent* kev;
