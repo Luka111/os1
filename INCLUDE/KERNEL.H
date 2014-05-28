@@ -9,8 +9,10 @@ class PCB;
 class Kernel {
   public:
   static volatile PCB* runningPCB;
+  static volatile PCB* s_UserThreadPCB;
   static volatile PCB* systemPCB;
-  static void block();
+  static void triggerSystemCall(ID id);
+  static interrupt void block();
   static void deblock(volatile PCB* pcb);
   static InterruptHandler swapHandlers(IVTNo ivtNo, InterruptHandler newhandler);
   static void interrupt dispatch();

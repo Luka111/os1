@@ -19,14 +19,7 @@ KernelObj::~KernelObj(){
 }
 
 void KernelObj::asmwait(){
-  lock();
-  unsigned id = m_ID;
-  asm {
-    mov ax, id
-    mov dx, 42
-    int 60h
-  }
-  unlock();
+  Kernel::triggerSystemCall(m_ID);
 }
 
 void KernelObj::block(){

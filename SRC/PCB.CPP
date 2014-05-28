@@ -43,16 +43,21 @@ PCB* PCB::createSystemPCB(StackSize stackSize, void* systemCallFunctionPointer){
 }
 
 void PCB::wait(){
-  asmwait();
+  if(this != Kernel::s_UserThreadPCB){
+    asmwait();
+  }
 }
 
 void PCB::block(){
   lock();
-  cout << "PCB ID " << m_ID << " blocking PCB ID " << Kernel::runningPCB->m_ID << endl;
-  m_Waiting.addToBack((PCB*)Kernel::runningPCB);
-  Kernel::runningPCB = (volatile PCB*)Scheduler::get();
+  //cout << "PCB ID " << m_ID << " blocking PCB ID " << Kernel::runningPCB->m_ID << endl;
+  if(Kernel::runningPCB){
+    Kernel::runningPCB->state = PCB::BLOCKED;
+    m_Waiting.addToBack((PCB*)Kernel::runningPCB);
+  }
+  //Kernel::runningPCB = (volatile PCB*)Scheduler::get();
+  //cout << "Now " << Kernel::runningPCB->m_ID << " is running with state " << Kernel::runningPCB->state << endl;
   unlock();
-  cout << "current running is " << (void*)Kernel::runningPCB << endl;
 }
 
 void PCB::signal(){
@@ -61,6 +66,7 @@ void PCB::signal(){
   {
     temp = m_Waiting.getFromFront();
     state = PCB::READY;
+    //cout << "Scheduling " << temp->m_ID << endl;
     Scheduler::put(temp);
   }
   state = PCB::TERMINATED;

@@ -13,10 +13,12 @@ KernelEvent::KernelEvent(IVTNo ivtNo):
   m_ivtNo(ivtNo),
   m_ParentPCB(Kernel::runningPCB){
     g_KernelEventMap[m_ivtNo] = m_ID;
-    IVTEntry* ivtentry = IVTEntry::getByIvtNo(ivtNo);
+    volatile IVTEntry* ivtentry = IVTEntry::getByIvtNo(ivtNo);
     if(ivtentry){
-      cout << "installing my id " << m_ID << "on IVTEntry " << (void*) ivtentry << endl;
+      cout << "installing my id " << m_ID << " on IVTEntry " << (void*) ivtentry << endl;
       ivtentry->m_KernelEventID = m_ID;
+    }else{
+      cout << "NO IVTEntry on " << (int)ivtNo << " ?" << endl;
     }
 }
 
@@ -40,6 +42,6 @@ ID KernelEvent::getByIvtNo(IVTNo ivtNo){
 
 ID KernelObj::createKernelEvent(IVTNo ivtNo){
   KernelEvent* nke = new KernelEvent(ivtNo);
-  cout << "KernelEvent on ivtNo " << ivtNo << endl;
+  cout << "KernelEvent on ivtNo " << (int)ivtNo << endl;
   return nke->m_ID;
 }

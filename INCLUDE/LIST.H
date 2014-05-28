@@ -19,24 +19,19 @@ class List
     Node *head, *tail;
 
     List (){
-      lock();
       head = tail = 0;
       count = 0;
-      unlock();
     }
     ~List (){
-      lock();
       while(head)
       {
         Node* old = head;
         head = old->next;
         delete old;
       }
-      unlock();
     }
 
     void addToBack (T* d){
-      lock();
       Node* newNode = new Node(d);
       if (head)
         tail->next = newNode;
@@ -44,13 +39,10 @@ class List
         head = newNode;
       tail = newNode;
       count++;
-      unlock();
     }
     T* getFromFront (){
-      lock();
       if (isEmpty())
       {
-        unlock();
         return 0;
       }
       T* d = head->data;
@@ -58,11 +50,9 @@ class List
       head = old->next;
       delete old;
       count--;
-      unlock();
       return d;
     }
     int remove(T* pointer){
-      lock();
       Node *current = head, *previous = 0;
       while((current->data != pointer) && (current != 0))
       {
@@ -71,13 +61,13 @@ class List
       }
       if (!current)
       {
-        unlock();
         return -1;
       }
-      previous->next = current->next;
+      if(previous){
+        previous->next = current->next;
+      }
       delete current;
       count--;
-      unlock();
       return 0;
     }
 
