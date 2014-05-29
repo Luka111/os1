@@ -6,6 +6,12 @@ KernelSemaphore::KernelSemaphore(int val):
   m_Val(val){
 }
 
+KernelSemaphore::~KernelSemaphore(){
+  while(!m_BlockedPCBs.isEmpty()){
+    signal();
+  }
+}
+
 void KernelSemaphore::wait(){
   if(--m_Val<0){
     asmwait();

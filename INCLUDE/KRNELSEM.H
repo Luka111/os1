@@ -12,6 +12,7 @@ private:
   List<PCB> m_BlockedPCBs;
 public:
   KernelSemaphore(int val);
+  ~KernelSemaphore();
   void wait();
   void block();
   void signal();

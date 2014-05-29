@@ -353,7 +353,9 @@ int Kernel::kill(){
   while(!AllThreadPCBs.isEmpty())
   {
     cout << "Still " << AllThreadPCBs.size() << " PCBs left" << endl;
-    dispatch();
+    PCB* pcb = AllThreadPCBs.getFromFront();
+    cout << pcb->m_ID << " => " << pcb->state << endl;
+    //dispatch();
   }
   swapHandlers(0x08, originalTimerRoutine);
   swapHandlers(0x60, originalSystemRoutine);

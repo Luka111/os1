@@ -17,6 +17,7 @@ KernelEvent::KernelEvent(IVTNo ivtNo):
 }
 
 KernelEvent::~KernelEvent(){
+  Kernel::deblock(m_ParentPCB);
   g_KernelEventMap[m_ivtNo] = 0;
 }
 
