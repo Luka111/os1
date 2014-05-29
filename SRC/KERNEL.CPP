@@ -31,7 +31,8 @@ void interrupt systemCallTrigerrer(){
 }
 
 void Kernel::triggerSystemCall(ID id, unsigned operation){
-  while(dispatchActive);
+  while(dispatchActive && runningPCB) cout << "_";
+  if(!runningPCB){return;}
   asm{
     mov ax, id
     mov dx, operation
@@ -271,8 +272,8 @@ void Kernel::systemCall(ID id, unsigned int operation){
 }
 
 void interrupt Kernel::dispatch(){
-  dispatchActive = 1;
   lock();
+  dispatchActive = 1;
   if(!runningPCB){
     asm{
       mov sp,kernelSP
@@ -317,9 +318,9 @@ void interrupt Kernel::dispatch(){
       mov ss, sss
     }
   }
+  dispatchActive = 0;
   unlock();
   //cout << "leaving on " << runningPCB->m_ID << runningPCB->ss << ":" << runningPCB->sp << endl;
-  dispatchActive = 0;
 }
 
 PCB* Kernel::block(){
@@ -351,6 +352,7 @@ int Kernel::kill(){
   delete u;
   while(!AllThreadPCBs.isEmpty())
   {
+    cout << "Still " << AllThreadPCBs.size() << " PCBs left" << endl;
     dispatch();
   }
   swapHandlers(0x08, originalTimerRoutine);
