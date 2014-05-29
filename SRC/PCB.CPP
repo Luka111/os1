@@ -4,9 +4,6 @@
 #include "..\INCLUDE\SCHEDULE.H"
 #include "..\INCLUDE\KERNEL.H"
 
-
-#include <iostream.h>
-
 PCB::PCB(Thread *thr, StackSize stackSize , Time timeSlice, void* threadwrapper):
   state(NEW),
   m_Thread(thr),
@@ -18,7 +15,6 @@ PCB::PCB(Thread *thr, StackSize stackSize , Time timeSlice, void* threadwrapper)
   m_Waiting(){
     Kernel::createStack(this,stackSize,threadwrapper);
     Kernel::AllThreadPCBs.addToBack(this);
-    cout << "PCB " << (void*) this << " created" << endl;
   }
 
 PCB::PCB(StackSize stackSize, void* functionpointer):
@@ -50,13 +46,10 @@ void PCB::wait(){
 
 void PCB::block(){
   lock();
-  //cout << "PCB ID " << m_ID << " blocking PCB ID " << Kernel::runningPCB->m_ID << endl;
-  if(Kernel::runningPCB){
-    Kernel::runningPCB->state = PCB::BLOCKED;
-    m_Waiting.addToBack((PCB*)Kernel::runningPCB);
-  }
+  //if(Kernel::runningPCB){
+  m_Waiting.addToBack(Kernel::block());
+  //}
   //Kernel::runningPCB = (volatile PCB*)Scheduler::get();
-  //cout << "Now " << Kernel::runningPCB->m_ID << " is running with state " << Kernel::runningPCB->state << endl;
   unlock();
 }
 
@@ -66,24 +59,22 @@ void PCB::signal(){
   {
     temp = m_Waiting.getFromFront();
     state = PCB::READY;
-    //cout << "Scheduling " << temp->m_ID << endl;
     Scheduler::put(temp);
   }
   state = PCB::TERMINATED;
+}
+
+void PCB::addToWaitingQueue(PCB* blockingPCB){
+  m_Waiting.addToBack(blockingPCB);
 }
 
 int PCB::shouldBeDispatched(){
   if (m_timeQuantsToRun != 0){
     m_timeQuantsRan ++;
     if (m_timeQuantsRan>=m_timeQuantsToRun){
-      //cout << "PCB ID " << m_ID << "should be dispatched because " << m_timeQuantsRan << ">=" << m_timeQuantsToRun << endl;
       m_timeQuantsRan=0;
       return 1;
-    }else{
-      //cout << "PCB ID " << m_ID << "should NOT be dispatched yet because " << m_timeQuantsRan << "<" << m_timeQuantsToRun << endl;
     }
-  }else{
-    //cout << "PCB ID " << m_ID << " should run forever, no dispatch allowed" << endl;
   }
   return 0;
 }

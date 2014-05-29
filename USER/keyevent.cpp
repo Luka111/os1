@@ -48,7 +48,6 @@ void KeyboardEvent::run()
 	while (!theEnd) {
       
 		event9.wait();
-    cout<<"I got the signal!"<<endl;
 		do{
 			status = inportb(0x64); // ocitava statusni reg. sa 64h
 

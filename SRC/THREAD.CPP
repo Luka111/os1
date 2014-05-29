@@ -6,11 +6,8 @@
 #include "..\INCLUDE\SCHEDULE.H"
 #include "..\INCLUDE\SEGMENT.H"
 
-#include <iostream.h>
-
 Thread::Thread(StackSize stackSize, Time timeSlice):
 m_PCBId(KernelObj::createPCB(this,stackSize,timeSlice,(void*)(&(Thread::wrapper)))){
-  //cout << "Thread ID " << m_PCBId << " " << (void*) this << " created with timeSlice " << timeSlice << ", defaultTimeSlice BTW is " << defaultTimeSlice << endl;
 }
 
 Thread::~Thread(){
@@ -23,7 +20,6 @@ void Thread::start(){
   PCB* myPCB = (PCB*)KernelObj::get(m_PCBId);
   if(myPCB->state == PCB::NEW){
     myPCB->state = PCB::READY;
-    //cout << "Scheduling " << myPCB->m_ID << endl;
     Scheduler::put(myPCB);
   }
   unlock();
@@ -33,12 +29,10 @@ void Thread::waitToComplete(){
   lock();
   KernelObj* myPCB = KernelObj::get(m_PCBId);
   myPCB->wait();
-  cout << m_PCBId << " waitsToComplete" << endl;
   unlock();
 }
 
 void Thread::wrapper(Thread *running){
-  cout << "wrapper started PCB ID " << running->m_PCBId << endl;
   running->run();
   lock();
   KernelObj::get(running->m_PCBId)->signal();

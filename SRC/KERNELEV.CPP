@@ -3,9 +3,6 @@
 #include "..\INCLUDE\LOCK.H"
 #include "..\INCLUDE\IVTENTRY.H"
 
-
-#include <iostream.h>
-
 static ID g_KernelEventMap[256] = {0};
 
 KernelEvent::KernelEvent(IVTNo ivtNo):
@@ -15,10 +12,7 @@ KernelEvent::KernelEvent(IVTNo ivtNo):
     g_KernelEventMap[m_ivtNo] = m_ID;
     volatile IVTEntry* ivtentry = IVTEntry::getByIvtNo(ivtNo);
     if(ivtentry){
-      cout << "installing my id " << m_ID << " on IVTEntry " << (void*) ivtentry << endl;
       ivtentry->m_KernelEventID = m_ID;
-    }else{
-      cout << "NO IVTEntry on " << (int)ivtNo << " ?" << endl;
     }
 }
 
@@ -42,6 +36,5 @@ ID KernelEvent::getByIvtNo(IVTNo ivtNo){
 
 ID KernelObj::createKernelEvent(IVTNo ivtNo){
   KernelEvent* nke = new KernelEvent(ivtNo);
-  cout << "KernelEvent on ivtNo " << (int)ivtNo << endl;
   return nke->m_ID;
 }

@@ -25,6 +25,7 @@ struct PCB : public KernelObj{
   void wait();
   void block();
   void signal();
+  void addToWaitingQueue(PCB* blockingPCB);
 
   int shouldBeDispatched();
   static PCB* createSystemPCB(StackSize stackSize, void* systemCallFunctionPointer);
