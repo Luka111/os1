@@ -17,7 +17,9 @@ class KeyboardEvent :public Thread{
 public:
 
 	KeyboardEvent (BoundedBuffer*);  
-	virtual ~KeyboardEvent () {waitToComplete();}
+	virtual ~KeyboardEvent () {
+    waitToComplete();
+  }
 protected:
 
 	virtual void run();

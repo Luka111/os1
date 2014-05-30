@@ -1,12 +1,15 @@
 #include "..\INCLUDE\KRNELSEM.H"
 #include "..\INCLUDE\KERNEL.H"
 
+#include <iostream.h>
+
 KernelSemaphore::KernelSemaphore(int val):
   KernelObj(),
   m_Val(val){
 }
 
 KernelSemaphore::~KernelSemaphore(){
+  //cout << m_BlockedPCBs.size() << "blocked PCBs on KernelSemaphore death" << endl;
   while(!m_BlockedPCBs.isEmpty()){
     signal();
   }
@@ -19,6 +22,7 @@ void KernelSemaphore::wait(){
 }
 
 void KernelSemaphore::block(){
+  //cout << "KernelSemaphore " << m_ID << " blocking" << endl;
   m_BlockedPCBs.addToBack(Kernel::block());
 }
 

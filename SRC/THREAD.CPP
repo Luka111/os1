@@ -6,6 +6,8 @@
 #include "..\INCLUDE\SCHEDULE.H"
 #include "..\INCLUDE\SEGMENT.H"
 
+#include <iostream.h>
+
 Thread::Thread(StackSize stackSize, Time timeSlice):
 m_PCBId(KernelObj::createPCB(this,stackSize,timeSlice,(void*)(&(Thread::wrapper)))){
 }
@@ -35,6 +37,7 @@ void Thread::waitToComplete(){
 void Thread::wrapper(Thread *running){
   running->run();
   lock();
+  //cout << running->m_PCBId << " finished and signaling" << endl;
   KernelObj::get(running->m_PCBId)->signal();
   Kernel::dispatch();
   unlock();

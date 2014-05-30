@@ -3,6 +3,8 @@
 #include "..\INCLUDE\LOCK.H"
 #include "..\INCLUDE\KERNEL.H"
 
+#include <iostream.h>
+
 static IDMap<KernelObj> g_Map;
 
 KernelObj::KernelObj():
@@ -18,6 +20,7 @@ void KernelObj::asmwait(){
 }
 
 void KernelObj::block(){
+  //cout << m_ID << " blocking" << endl;
   Kernel::block();
 }
 
@@ -26,7 +29,7 @@ KernelObj* KernelObj::get(ID id){
 }
 
 void KernelObj::destroy(ID id){
-  delete g_Map.get(id);
+  delete g_Map.remove(id);
 }
 
 ID KernelObj::putObj(KernelObj* obj){

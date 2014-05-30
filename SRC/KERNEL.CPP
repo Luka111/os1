@@ -5,9 +5,49 @@
 #include "..\INCLUDE\SCHEDULE.H"
 #include "..\INCLUDE\PCB.H"
 #include "..\INCLUDE\THREAD.H"
-#include "..\INCLUDE\USRTHRD.H"
+//#include "..\INCLUDE\USRTHRD.H"
 
 #include <iostream.h>
+
+extern int userMain(int argc, char* argv[]);
+
+class UserThread : public Thread {
+  int m_Result;
+  int m_Argc;
+  char** m_Argv;
+public:
+  UserThread(int argc, char* argv[]):
+    Thread(),
+    m_Result(-14),
+    m_Argc(argc),
+    m_Argv(argv){}
+  void run(){
+    m_Result = userMain(m_Argc,m_Argv);
+  }
+  inline int result() const {return m_Result;}
+};
+
+class KernelThread : public Thread {
+  UserThread* m_UserThread;
+  int m_Argc;
+  char** m_Argv;
+public:
+  KernelThread(int argc, char* argv[]):
+    Thread(),
+    m_UserThread(NULL),
+    m_Argc(argc),
+    m_Argv(argv){
+    }
+  ~KernelThread(){
+    delete m_UserThread;
+  }
+  void run(){
+    m_UserThread = new UserThread(m_Argc,m_Argv);
+    m_UserThread->start();
+    m_UserThread->waitToComplete();
+  }
+  int result() const {return m_UserThread->result();}
+} * s_KernelThread;
 
 const unsigned int systemPCBStackSize = 4096;
 
@@ -142,6 +182,9 @@ void Kernel::createStack(PCB* newPCB, StackSize stackSize, void* startfunction)
   lock();
   if(!runningPCB){
     s_UserThreadPCB = newPCB;
+    runningPCB = s_UserThreadPCB;
+    runningPCB->state = PCB::RUNNING;
+    systemEventid = -1; //skip the initial setting of sp and ss for this PCB
   }
   byte* stack = new byte[stackSize];
 
@@ -275,10 +318,7 @@ void interrupt Kernel::dispatch(){
   lock();
   dispatchActive = 1;
   if(!runningPCB){
-    asm{
-      mov sp,kernelSP
-      mov ss,kernelSS
-    }
+    //cout << "No running" << endl;
     unlock();
     return;
   }
@@ -287,27 +327,33 @@ void interrupt Kernel::dispatch(){
       mov ssp, sp
       mov sss, ss
     }
-    if(runningPCB->state == PCB::READY){
-      kernelSP = ssp;
-      kernelSS = sss;
-    }else{
-      runningPCB->sp = ssp;
-      runningPCB->ss = sss;
-    }
+    runningPCB->sp = ssp;
+    runningPCB->ss = sss;
   }else{
+    if(systemEventid==-1){
+      asm{
+        mov kernelSP, sp
+        mov kernelSS, ss
+      }
+    }
     systemEventid = 0;
   }
   if(runningPCB->state == PCB::RUNNING)
   {
     runningPCB->state=PCB::READY;
     Scheduler::put((PCB*)runningPCB);
+  }else{
+    //cout << runningPCB->m_ID << " is not in RUNNING state, but in " << runningPCB->state << endl;
   }
   runningPCB = Scheduler::get();
   if(!runningPCB){
+    //cout << "No running after dispatch" << endl;
     asm{
       mov sp, kernelSP
       mov ss, kernelSS
     }
+    unlock();
+    return;
   }else{
     runningPCB->state = PCB::RUNNING;
 
@@ -324,38 +370,44 @@ void interrupt Kernel::dispatch(){
 }
 
 PCB* Kernel::block(){
+  lock();
+  //cout << "Blocking " << runningPCB->m_ID << endl;
   runningPCB->state = PCB::BLOCKED;
   return (PCB*)runningPCB;
+  unlock();
 }
 
 void Kernel::deblock(volatile PCB* pcb){
+  lock();
   if(pcb!=runningPCB){
+    //cout << "Deblocking " << pcb->m_ID << endl;
     pcb->state = PCB::READY;
     Scheduler::put((PCB*)pcb);
   }
+  unlock();
 }
 
 void Kernel::initialize(int argc, char* argv[]){
+  //UserThread* u = new UserThread(argc,argv); //just like that
+  systemPCB = PCB::createSystemPCB(systemPCBStackSize, (void*)(&(systemCall)));
+  (new KernelThread(argc,argv))->start();
   originalTimerRoutine = swapHandlers(0x08, timerRoutine);
   originalSystemRoutine = swapHandlers(0x60, systemRoutine);
-  UserThread* u = new UserThread(argc,argv); //just like that
-  systemPCB = PCB::createSystemPCB(systemPCBStackSize, (void*)(&(systemCall)));
-  runningPCB = s_UserThreadPCB;
-  u->start();
+  //u->start();
   dispatch();
 }
 
 int Kernel::kill(){
   lock();
-  UserThread* u = (UserThread*)(s_UserThreadPCB->m_Thread);
-  int result = u->getInvocationResult();
-  delete u;
+  KernelThread* kt = (KernelThread*)(s_UserThreadPCB->m_Thread);
+  int result = kt->result();
+  delete kt;
   while(!AllThreadPCBs.isEmpty())
   {
-    cout << "Still " << AllThreadPCBs.size() << " PCBs left" << endl;
+    //cout << "Still " << AllThreadPCBs.size() << " PCBs left" << endl;
     PCB* pcb = AllThreadPCBs.getFromFront();
-    cout << pcb->m_ID << " => " << pcb->state << endl;
-    //dispatch();
+    //cout << pcb->m_ID << " => " << pcb->state << endl;
+    dispatch();
   }
   swapHandlers(0x08, originalTimerRoutine);
   swapHandlers(0x60, originalSystemRoutine);

@@ -28,7 +28,9 @@ volatile int theEnd=0;
 class Producer : public Thread {
 public:
 	Producer (BoundedBuffer* bb, char y, Time time_slice);
-	virtual ~Producer() {waitToComplete(); }
+	virtual ~Producer() {
+    waitToComplete();
+  }
 protected:
 	virtual void run ();
 	char produce() {return x;}; // Produce an item
