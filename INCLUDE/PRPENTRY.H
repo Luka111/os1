@@ -14,9 +14,9 @@
   {                     \
     ID id = entry##IVTN.m_KernelEventID;  \
     if(id){ \
+      Kernel::triggerSystemCall(id,43);  \
       if(useOldRoutine)               \
         entry##IVTN.execOriginalInterruptHandler();        \
-      Kernel::triggerSystemCall(id,43);  \
     } else {\
       entry##IVTN.execOriginalInterruptHandler();        \
     } \

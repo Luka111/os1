@@ -12,8 +12,7 @@
 
 class PCB;
 
-class Kernel {
-  public:
+struct Kernel {
   static volatile PCB* runningPCB;
   static void triggerSystemCall(ID id, unsigned operation);
   static PCB* block();

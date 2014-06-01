@@ -15,7 +15,6 @@ class KernelObj {
 protected:
   KernelObj();
   virtual ~KernelObj();
-public:
   ID m_ID;
 public:
   void asmwait(); //switcher to system call

@@ -12,7 +12,6 @@
 #include "..\INCLUDE\KRNELOBJ.H"
 
 class Thread;
-typedef unsigned long StackSize;
 
 struct PCB : public KernelObj{
   PCB(); //this one creates the system PCB

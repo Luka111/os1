@@ -7,8 +7,6 @@
 #ifndef _list_h_
 #define _list_h_
 
-#include "../INCLUDE/LOCK.H"
-
 template <class T>
 class List
 {
