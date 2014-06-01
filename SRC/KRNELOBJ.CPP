@@ -1,9 +1,13 @@
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   krnelobj.cpp
+//===================================================
+
 #include "..\INCLUDE\KRNELOBJ.H"
 #include "..\INCLUDE\IDMAP.H"
 #include "..\INCLUDE\LOCK.H"
 #include "..\INCLUDE\KERNEL.H"
-
-#include <iostream.h>
 
 static IDMap<KernelObj> g_Map;
 
@@ -20,7 +24,6 @@ void KernelObj::asmwait(){
 }
 
 void KernelObj::block(){
-  //cout << m_ID << " blocking" << endl;
   Kernel::block();
 }
 

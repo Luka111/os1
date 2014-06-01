@@ -1,6 +1,10 @@
-#include "..\INCLUDE\LOCK.H"
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   idmap.h                  
+//===================================================
 
-#include <iostream.h>
+#include "..\INCLUDE\LOCK.H"
 
 extern ID g_IDMapCounter;
 template <class T> class IDMap {
@@ -27,7 +31,6 @@ public:
     lock();
     g_IDMapCounter++;
     posl = (!prvi ? prvi : posl->next) = new IDMapEntry(pt,g_IDMapCounter);
-    //cout<<"{{ PUT }} POINTER - " << pt << " <------> " << " COUNTER - " << g_IDMapCounter << endl;
     unlock();
     return g_IDMapCounter;
   }
@@ -39,8 +42,6 @@ public:
     if (!tek){
       return 0;
     }
-    //cout << tek->m_Pt << " -> " << id << "  |  " ;
-    //cout<<"{{ GET }} POINTER - " << tek->m_Pt << " <------> " << " COUNTER - " << id << endl;
     return tek->m_Pt;
   }
   T* remove(ID id){

@@ -1,4 +1,8 @@
-//PCB.H
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   pcb.h                  
+//===================================================
 
 #ifndef _pcb_h_
 #define _pcb_h_

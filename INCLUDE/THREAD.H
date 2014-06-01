@@ -1,4 +1,8 @@
-//Thread.h
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   thread.h                  
+//===================================================
 
 #ifndef _thread_h_
 #define _thread_h_

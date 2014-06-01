@@ -1,4 +1,8 @@
-//semaphor.cpp
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   semaphor.cpp
+//===================================================
 
 #include "..\INCLUDE\SEMAPHOR.H"
 #include "..\INCLUDE\KRNELOBJ.H"

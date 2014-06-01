@@ -1,4 +1,8 @@
-//semaphor.h
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   semaphor.h                  
+//===================================================
 
 #ifndef _semaphor_h_
 #define _semaphor_h_

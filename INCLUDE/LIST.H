@@ -1,3 +1,9 @@
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   list.h                  
+//===================================================
+
 #ifndef _list_h_
 #define _list_h_
 

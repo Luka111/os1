@@ -1,3 +1,9 @@
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   systhrd.cpp
+//===================================================
+
 #include "..\INCLUDE\SYSTHRD.H"
 
 SystemThread::SystemThread():

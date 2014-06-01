@@ -1,3 +1,9 @@
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   kernel.cpp
+//===================================================
+
 #include "..\INCLUDE\KERNEL.H"
 #include "..\INCLUDE\SEGMENT.H"
 #include "..\INCLUDE\LOCK.H"
@@ -5,9 +11,6 @@
 #include "..\INCLUDE\SCHEDULE.H"
 #include "..\INCLUDE\PCB.H"
 #include "..\INCLUDE\THREAD.H"
-//#include "..\INCLUDE\USRTHRD.H"
-
-#include <iostream.h>
 
 extern int userMain(int argc, char* argv[]);
 
@@ -27,33 +30,9 @@ public:
   inline int result() const {return m_Result;}
 };
 
-class KernelThread : public Thread {
-  UserThread* m_UserThread;
-  int m_Argc;
-  char** m_Argv;
-public:
-  KernelThread(int argc, char* argv[]):
-    Thread(),
-    m_UserThread(NULL),
-    m_Argc(argc),
-    m_Argv(argv){
-    }
-  ~KernelThread(){
-    delete m_UserThread;
-  }
-  void run(){
-    m_UserThread = new UserThread(m_Argc,m_Argv);
-    m_UserThread->start();
-    m_UserThread->waitToComplete();
-  }
-  int result() const {return m_UserThread->result();}
-} * s_KernelThread;
-
 const unsigned int systemPCBStackSize = 4096;
 
 volatile PCB* Kernel::runningPCB = NULL;
-
-static volatile PCB* tempPCB = NULL;
 
 volatile PCB* Kernel::s_UserThreadPCB = NULL;
 
@@ -71,7 +50,6 @@ void interrupt systemCallTrigerrer(){
 }
 
 void Kernel::triggerSystemCall(ID id, unsigned operation){
-  while(dispatchActive && runningPCB) cout << "_";
   if(!runningPCB){return;}
   asm{
     mov ax, id
@@ -132,10 +110,7 @@ extern void tick();
 
 static void interrupt timerRoutine(){
   if(!systemEventid && Kernel::runningPCB && Kernel::runningPCB->shouldBeDispatched()){
-    //cout << "d" << endl;
     Kernel::dispatch();
-  }else{
-    //cout << "no d " << systemEventid << endl;
   }
   tick();
   (*originalTimerRoutine)();
@@ -318,7 +293,6 @@ void interrupt Kernel::dispatch(){
   lock();
   dispatchActive = 1;
   if(!runningPCB){
-    //cout << "No running" << endl;
     unlock();
     return;
   }
@@ -343,11 +317,9 @@ void interrupt Kernel::dispatch(){
     runningPCB->state=PCB::READY;
     Scheduler::put((PCB*)runningPCB);
   }else{
-    //cout << runningPCB->m_ID << " is not in RUNNING state, but in " << runningPCB->state << endl;
   }
   runningPCB = Scheduler::get();
   if(!runningPCB){
-    //cout << "No running after dispatch" << endl;
     asm{
       mov sp, kernelSP
       mov ss, kernelSS
@@ -366,12 +338,10 @@ void interrupt Kernel::dispatch(){
   }
   dispatchActive = 0;
   unlock();
-  //cout << "leaving on " << runningPCB->m_ID << runningPCB->ss << ":" << runningPCB->sp << endl;
 }
 
 PCB* Kernel::block(){
   lock();
-  //cout << "Blocking " << runningPCB->m_ID << endl;
   runningPCB->state = PCB::BLOCKED;
   return (PCB*)runningPCB;
   unlock();
@@ -380,7 +350,6 @@ PCB* Kernel::block(){
 void Kernel::deblock(volatile PCB* pcb){
   lock();
   if(pcb!=runningPCB){
-    //cout << "Deblocking " << pcb->m_ID << endl;
     pcb->state = PCB::READY;
     Scheduler::put((PCB*)pcb);
   }
@@ -388,25 +357,21 @@ void Kernel::deblock(volatile PCB* pcb){
 }
 
 void Kernel::initialize(int argc, char* argv[]){
-  //UserThread* u = new UserThread(argc,argv); //just like that
   systemPCB = PCB::createSystemPCB(systemPCBStackSize, (void*)(&(systemCall)));
-  (new KernelThread(argc,argv))->start();
+  (new UserThread(argc,argv))->start();
   originalTimerRoutine = swapHandlers(0x08, timerRoutine);
   originalSystemRoutine = swapHandlers(0x60, systemRoutine);
-  //u->start();
   dispatch();
 }
 
 int Kernel::kill(){
   lock();
-  KernelThread* kt = (KernelThread*)(s_UserThreadPCB->m_Thread);
+  UserThread* kt = (UserThread*)(s_UserThreadPCB->m_Thread);
   int result = kt->result();
   delete kt;
   while(!AllThreadPCBs.isEmpty())
   {
-    //cout << "Still " << AllThreadPCBs.size() << " PCBs left" << endl;
     PCB* pcb = AllThreadPCBs.getFromFront();
-    //cout << pcb->m_ID << " => " << pcb->state << endl;
     dispatch();
   }
   swapHandlers(0x08, originalTimerRoutine);

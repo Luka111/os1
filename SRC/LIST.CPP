@@ -1,3 +1,10 @@
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   list.cpp
+//===================================================
+
+
 #include "List.h"
 
 template <class T>

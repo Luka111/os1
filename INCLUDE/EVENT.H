@@ -1,5 +1,8 @@
-//event.h
-
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   event.h                  
+//===================================================
 
 #ifndef _event_h_
 #define _event_h_

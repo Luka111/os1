@@ -1,3 +1,9 @@
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   krnelobj.h                  
+//===================================================
+
 #ifndef __KERNELOBJ_H
 #define __KERNELOBJ_H
 

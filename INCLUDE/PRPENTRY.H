@@ -1,3 +1,9 @@
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   prpentry.h                  
+//===================================================
+
 #ifndef __PRPENTRY_H
 #define __PRPENTRY_H
 

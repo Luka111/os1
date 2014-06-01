@@ -1,3 +1,9 @@
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   kernelev.h                  
+//===================================================
+
 #ifndef __KERNELEVENT_H
 #define __KERNELEVENT_H
 

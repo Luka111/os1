@@ -1,3 +1,9 @@
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   krnelsem.h                  
+//===================================================
+
 #ifndef __KERNELSEMAPHORE_H
 #define __KERNELSEMAPHORE_H
 

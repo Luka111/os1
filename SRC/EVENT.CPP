@@ -1,5 +1,8 @@
-//event.cpp
-
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   event.cpp
+//===================================================
 
 #include "..\INCLUDE\Event.h"
 #include "..\INCLUDE\KRNELOBJ.H"

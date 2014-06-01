@@ -1,10 +1,12 @@
-//PCB.CPP
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   pcb.cpp
+//===================================================
 
 #include "..\INCLUDE\PCB.H"
 #include "..\INCLUDE\SCHEDULE.H"
 #include "..\INCLUDE\KERNEL.H"
-
-#include <iostream.h>
 
 PCB::PCB(Thread *thr, StackSize stackSize , Time timeSlice, void* threadwrapper):
   state(NEW),
@@ -15,7 +17,6 @@ PCB::PCB(Thread *thr, StackSize stackSize , Time timeSlice, void* threadwrapper)
   m_timeQuantsToRun(timeSlice),
   m_timeQuantsRan(0),
   m_Waiting(){
-    cout << "Created " << m_ID << endl;
     Kernel::createStack(this,stackSize,threadwrapper);
     Kernel::AllThreadPCBs.addToBack(this);
   }
@@ -33,7 +34,6 @@ PCB::PCB(StackSize stackSize, void* functionpointer):
   }
 
 PCB::~PCB(){
-  cout << "removing " << m_ID << endl;
   Kernel::AllThreadPCBs.remove(this);
   delete stack;
 }
@@ -54,13 +54,11 @@ void PCB::wait(){
 
 void PCB::block(){
   lock();
-  cout << "PCB " << m_ID << " in state " << state << " blocking" << endl;
   m_Waiting.addToBack(Kernel::block());
   unlock();
 }
 
 void PCB::signal(){
-  cout << m_ID << " has got " << m_Waiting.size() << " waiting PCBs in PCB signal" << endl;
   while (!m_Waiting.isEmpty())
   {
     Kernel::deblock(m_Waiting.getFromFront());

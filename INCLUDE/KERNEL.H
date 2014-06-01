@@ -1,3 +1,9 @@
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   kernel.h                  
+//===================================================
+
 #ifndef _KERNEL_H_
 #define _KERNEL_H_
 

@@ -1,3 +1,9 @@
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   kernelev.cpp
+//===================================================
+
 #include "..\INCLUDE\KERNELEV.H"
 #include "..\INCLUDE\KERNEL.H"
 #include "..\INCLUDE\LOCK.H"

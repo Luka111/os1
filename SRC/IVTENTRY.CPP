@@ -1,3 +1,9 @@
+//==================================================
+//   Projektni zadatak iz Operativnih sistema 1  
+//   Student: Luka Petrovic 0069 / 12      
+//   ivtentry.cpp
+//===================================================
+
 #include "..\INCLUDE\IVTENTRY.H"
 #include "..\INCLUDE\KERNEL.H"
 #include "..\INCLUDE\KERNELEV.H"
