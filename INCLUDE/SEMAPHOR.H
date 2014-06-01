@@ -7,7 +7,7 @@
 #ifndef _semaphor_h_
 #define _semaphor_h_
 
-#include "../INCLUDE/THREAD.H" //just for ID
+#include "../INCLUDE/TYPES.H"
 
 class Semaphore{
 public:
