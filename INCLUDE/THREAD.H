@@ -8,7 +8,7 @@
 #define _thread_h_
 
 typedef unsigned long StackSize;
-const StackSize defaultStackSize=4096;
+const StackSize defaultStackSize=2048; //to fit 20 PCBs, each with its stack, in 64K RAM
 typedef unsigned int Time; // time, x 55ms
 const Time defaultTimeSlice=2; // default = 2*55ms
 typedef int ID;

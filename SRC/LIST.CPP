@@ -93,7 +93,7 @@ inline int List<T>::size() const
 }
 
 template <class T>
-inline bool List<T>::isEmpty() const
+inline int List<T>::isEmpty() const
 {
 	return !count;
 }

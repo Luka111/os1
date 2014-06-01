@@ -32,11 +32,11 @@ public:
 
 const unsigned int systemPCBStackSize = 4096;
 
+volatile PCB* systemPCB = NULL;
+
 volatile PCB* Kernel::runningPCB = NULL;
 
-volatile PCB* Kernel::s_UserThreadPCB = NULL;
-
-volatile PCB* Kernel::systemPCB = NULL;
+volatile PCB* s_UserThreadPCB = NULL;
 
 List<PCB> Kernel::AllThreadPCBs;
 
@@ -46,7 +46,73 @@ static InterruptHandler originalSystemRoutine;
 
 static volatile unsigned sss, ssp, tws, twp, rts, rtp, oldSP, oldSS, kernelSS, kernelSP, systemEventid=0, systemOperation, dispatchActive=0;
 
-void interrupt systemCallTrigerrer(){
+void systemCall(ID id, unsigned int operation){
+  lock();
+  KernelObj* ko = KernelObj::get(id);
+  switch(operation){
+    case 42:
+      ko->block();
+      break;
+    case 43:
+      ko->signal();
+      break;
+    default:
+      break;
+  }
+  dispatch();
+  unlock();
+}
+
+void Kernel::createSystemStack(PCB* newPCB){
+  lock();
+  byte* stack = new byte[systemPCBStackSize];
+  sss = FP_SEG(stack+systemPCBStackSize-1);
+  ssp = FP_OFF(stack+systemPCBStackSize-1);
+  tws = FP_SEG(&(systemCall));
+  twp = FP_OFF(&(systemCall));
+
+  asm{
+    push ax
+    mov oldSS, ss
+    mov oldSP, sp
+    mov ss, sss
+    mov sp, ssp
+    mov ax, 1389
+    push ax
+    push ax
+    // save PSW 
+    pushf
+    pop ax
+    or ax, 1000000000b
+    push ax
+    // save CS of startfunction
+    mov ax, tws
+    push ax
+    // save IP of startfunction
+    mov ax, twp
+    push ax
+    //"unwind the stack"
+    mov ax, 0
+    push ax
+    push ax
+    push ax
+    push ax
+    push es
+    push ds
+    push si
+    push di
+    push bp
+
+    mov sss, ss
+    mov ssp, sp
+    mov ss, oldSS
+    mov sp, oldSP
+    pop ax
+  }
+  newPCB->ss = sss;
+  newPCB->sp = ssp;
+  newPCB->stack = stack;
+  unlock();
 }
 
 void Kernel::triggerSystemCall(ID id, unsigned operation){
@@ -67,10 +133,10 @@ static void interrupt systemRoutine(){
   }
   Kernel::runningPCB->ss = sss;
   Kernel::runningPCB->sp = ssp;
-  ssp = FP_OFF(Kernel::systemPCB->stack+systemPCBStackSize-1);
-  sss = FP_SEG(Kernel::systemPCB->stack+systemPCBStackSize-1);
-  tws = FP_SEG(&(Kernel::systemCall));
-  twp = FP_OFF(&(Kernel::systemCall));
+  ssp = FP_OFF(systemPCB->stack+systemPCBStackSize-1);
+  sss = FP_SEG(systemPCB->stack+systemPCBStackSize-1);
+  tws = FP_SEG(&(systemCall));
+  twp = FP_OFF(&(systemCall));
   asm{
     mov ax, systemEventid
     mov dx, systemOperation
@@ -220,75 +286,6 @@ void Kernel::createStack(PCB* newPCB, StackSize stackSize, void* startfunction)
   unlock();
 }
 
-void Kernel::createSystemStack(PCB* newPCB, StackSize stackSize, void* functionpointer){
-  lock();
-  byte* stack = new byte[stackSize];
-  sss = FP_SEG(stack+stackSize-1);
-  ssp = FP_OFF(stack+stackSize-1);
-  tws = FP_SEG(functionpointer);
-  twp = FP_OFF(functionpointer);
-
-  asm{
-    push ax
-    mov oldSS, ss
-    mov oldSP, sp
-    mov ss, sss
-    mov sp, ssp
-    mov ax, 1389
-    push ax
-    push ax
-    // save PSW 
-    pushf
-    pop ax
-    or ax, 1000000000b
-    push ax
-    // save CS of startfunction
-    mov ax, tws
-    push ax
-    // save IP of startfunction
-    mov ax, twp
-    push ax
-    //"unwind the stack"
-    mov ax, 0
-    push ax
-    push ax
-    push ax
-    push ax
-    push es
-    push ds
-    push si
-    push di
-    push bp
-
-    mov sss, ss
-    mov ssp, sp
-    mov ss, oldSS
-    mov sp, oldSP
-    pop ax
-  }
-  newPCB->ss = sss;
-  newPCB->sp = ssp;
-  newPCB->stack = stack;
-  unlock();
-}
-
-void Kernel::systemCall(ID id, unsigned int operation){
-  lock();
-  KernelObj* ko = KernelObj::get(id);
-  switch(operation){
-    case 42:
-      ko->block();
-      break;
-    case 43:
-      ko->signal();
-      break;
-    default:
-      break;
-  }
-  dispatch();
-  unlock();
-}
-
 void interrupt Kernel::dispatch(){
   lock();
   dispatchActive = 1;
@@ -357,7 +354,7 @@ void Kernel::deblock(volatile PCB* pcb){
 }
 
 void Kernel::initialize(int argc, char* argv[]){
-  systemPCB = PCB::createSystemPCB(systemPCBStackSize, (void*)(&(systemCall)));
+  systemPCB = new PCB;
   (new UserThread(argc,argv))->start();
   originalTimerRoutine = swapHandlers(0x08, timerRoutine);
   originalSystemRoutine = swapHandlers(0x60, systemRoutine);

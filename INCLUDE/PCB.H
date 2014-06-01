@@ -15,6 +15,7 @@ class Thread;
 typedef unsigned long StackSize;
 
 struct PCB : public KernelObj{
+  PCB(); //this one creates the system PCB
 	PCB(Thread *thr, StackSize sz , Time t, void* threadwrapper);
   ~PCB();
 	static enum {NEW,RUNNING,READY,BLOCKED,TERMINATED,SYSTEM};
@@ -32,7 +33,6 @@ struct PCB : public KernelObj{
   void addToWaitingQueue(PCB* blockingPCB);
 
   int shouldBeDispatched();
-  static PCB* createSystemPCB(StackSize stackSize, void* systemCallFunctionPointer);
 
 private:
 	Time m_timeQuantsToRun;
@@ -40,7 +40,6 @@ private:
 
 protected:
   //constructor for system PCB
-  PCB(StackSize sz, void* functionpointer);
 	List<PCB> m_Waiting ;
     
 };

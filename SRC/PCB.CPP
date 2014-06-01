@@ -7,6 +7,7 @@
 #include "..\INCLUDE\PCB.H"
 #include "..\INCLUDE\SCHEDULE.H"
 #include "..\INCLUDE\KERNEL.H"
+#include "..\INCLUDE\LOCK.H"
 
 PCB::PCB(Thread *thr, StackSize stackSize , Time timeSlice, void* threadwrapper):
   state(NEW),
@@ -21,7 +22,7 @@ PCB::PCB(Thread *thr, StackSize stackSize , Time timeSlice, void* threadwrapper)
     Kernel::AllThreadPCBs.addToBack(this);
   }
 
-PCB::PCB(StackSize stackSize, void* functionpointer):
+PCB::PCB():
   state(SYSTEM),
   m_Thread(0),
   stack(0),
@@ -30,16 +31,12 @@ PCB::PCB(StackSize stackSize, void* functionpointer):
   m_timeQuantsToRun(0),
   m_timeQuantsRan(0),
   m_Waiting(){
-    Kernel::createSystemStack(this,stackSize,functionpointer);
+    Kernel::createSystemStack(this);
   }
 
 PCB::~PCB(){
   Kernel::AllThreadPCBs.remove(this);
   delete stack;
-}
-
-PCB* PCB::createSystemPCB(StackSize stackSize, void* systemCallFunctionPointer){
-  return new PCB(stackSize,systemCallFunctionPointer);
 }
 
 void PCB::wait(){

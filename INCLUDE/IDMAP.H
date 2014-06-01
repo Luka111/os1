@@ -4,8 +4,6 @@
 //   idmap.h                  
 //===================================================
 
-#include "..\INCLUDE\LOCK.H"
-
 extern ID g_IDMapCounter;
 template <class T> class IDMap {
   struct IDMapEntry {
@@ -28,10 +26,8 @@ template <class T> class IDMap {
 public:
   IDMap():prvi(0),posl(0){};
   ID put(T* pt){
-    lock();
     g_IDMapCounter++;
     posl = (!prvi ? prvi : posl->next) = new IDMapEntry(pt,g_IDMapCounter);
-    unlock();
     return g_IDMapCounter;
   }
   T* get(ID id){

@@ -15,8 +15,6 @@ class PCB;
 class Kernel {
   public:
   static volatile PCB* runningPCB;
-  static volatile PCB* s_UserThreadPCB;
-  static volatile PCB* systemPCB;
   static void triggerSystemCall(ID id, unsigned operation);
   static PCB* block();
   static void deblock(volatile PCB* pcb);
@@ -25,10 +23,7 @@ class Kernel {
   static void initialize(int argc, char* argv[]);
   static int kill();
   static void createStack(PCB* newPCB, StackSize stackSize, void* threadwrapper);
-  static void createSystemStack(PCB* newPCB, StackSize stackSize, void* functionpointer);
-  static void systemCall(ID id, unsigned int operation);
-  static void saveStack();
-  static void restoreStack();
+  static void createSystemStack(PCB* newPCB);
   static List<PCB> Kernel::AllThreadPCBs;
 };
 

@@ -7,9 +7,7 @@
 #ifndef __TYPES_H
 #define __TYPES_H
 
-#include "_Null.h"
-#include "Lock.h"
-#include "Bool.h"
+#include <_NULL.H>
 
 typedef int ID;
 typedef unsigned char byte;
