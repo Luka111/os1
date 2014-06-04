@@ -49,15 +49,17 @@ static volatile unsigned sss, ssp, tws, twp, rts, rtp, oldSP, oldSS, kernelSS, k
 void systemCall(ID id, unsigned int operation){
   lock();
   KernelObj* ko = KernelObj::get(id);
-  switch(operation){
-    case 42:
-      ko->block();
-      break;
-    case 43:
-      ko->signal();
-      break;
-    default:
-      break;
+  if(ko){
+    switch(operation){
+      case 42:
+        ko->block();
+        break;
+      case 43:
+        ko->signal();
+        break;
+      default:
+        break;
+    }
   }
   dispatch();
   unlock();

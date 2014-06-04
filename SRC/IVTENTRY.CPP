@@ -19,6 +19,7 @@ IVTEntry::IVTEntry(IVTNo ivtNo, InterruptHandler ih):
 
 IVTEntry::~IVTEntry(){
   g_IVTEntryMap[m_ivtNo] = NULL;
+  Kernel::swapHandlers(m_ivtNo,m_OriginalHandler);
 }
 
 void IVTEntry::execOriginalInterruptHandler(){

@@ -23,8 +23,12 @@ KernelEvent::KernelEvent(IVTNo ivtNo):
 }
 
 KernelEvent::~KernelEvent(){
-  Kernel::deblock(m_ParentPCB);
   g_KernelEventMap[m_ivtNo] = 0;
+  volatile IVTEntry* ivtentry = IVTEntry::getByIvtNo(m_ivtNo);
+  if(ivtentry){
+    ivtentry->m_KernelEventID = 0;
+  }
+  Kernel::deblock(m_ParentPCB);
 }
 
 void KernelEvent::wait(){
